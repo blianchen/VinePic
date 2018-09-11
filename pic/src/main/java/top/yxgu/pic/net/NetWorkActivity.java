@@ -56,7 +56,7 @@ public class NetWorkActivity extends Activity {
                     if (mac.contains("00:00:00:00:00:00")) continue;
                     Log.e("scanner", "readArp: mac= "+mac+" ; ip= "+ip+" ;flag= "+flag);
                     String arp = "ip: "+ip+" | "+"mac: "+mac+" | "+"flag: "+flag;
-                    HashMap<String, Object> map = new HashMap<String, Object>();
+                    HashMap<String, Object> map = new HashMap<>();
                     map.put("ItemImage", R.drawable.icon_pc);
                     map.put("ItemText", ip);
                     list.add(map);

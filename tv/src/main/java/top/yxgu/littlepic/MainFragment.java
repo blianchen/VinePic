@@ -51,6 +51,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
+import top.yxgu.pic.net.NetWorkActivity;
+
 public class MainFragment extends BrowseFragment {
     private static final String TAG = "MainFragment";
 
@@ -79,6 +81,10 @@ public class MainFragment extends BrowseFragment {
         loadRows();
 
         setupEventListeners();
+
+        Intent i = new Intent("top.yxgu.pic.NetWorkActivity");
+        this.startActivity(i);
+
     }
 
     @Override

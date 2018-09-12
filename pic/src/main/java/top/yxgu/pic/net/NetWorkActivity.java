@@ -28,6 +28,7 @@ import jcifs.SmbResource;
 import jcifs.config.PropertyConfiguration;
 import jcifs.context.BaseContext;
 import jcifs.smb.SmbFile;
+import jcifs.smb.SmbUnsupportedOperationException;
 import top.yxgu.pic.R;
 
 public class NetWorkActivity extends Activity implements AdapterView.OnItemClickListener {
@@ -43,9 +44,15 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
         gridView = findViewById(R.id.GridViewNetWork);
         list = new ArrayList<>();
 
-//        getNetworkInfo();
-//        readArp();
-        getSharePcList();
+        getNetworkInfo();
+        readArp();
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                getSharePcList();
+//            }
+//        }).start();
+
     }
 
     private void getSharePcList() {
@@ -78,13 +85,35 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
         }
     }
 
+    private void testBrowseDomain (String ip) throws MalformedURLException, CIFSException {
+
+        CIFSContext ctx = withAnonymousCredentials();
+
+        try ( SmbFile smbFile = new SmbFile("smb://" + ip, ctx) ) {
+            // if domain is resolved through DNS this will be treated as a server and will enumerate shares instead
+//            Assume.assumeTrue("Not workgroup", SmbConstants.TYPE_WORKGROUP == smbFile.getType());
+            try ( CloseableIterator<SmbResource> it = smbFile.children() ) {
+                if ( it.hasNext() ) {
+                    try ( SmbResource serv = it.next() ) {
+                        System.err.println(serv.getName());
+//                        assertEquals(SmbConstants.TYPE_SERVER, serv.getType());
+//                        assertTrue(serv.isDirectory());
+//                        Toast.makeText(NetWorkActivity.this, serv.getName(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        } catch ( SmbUnsupportedOperationException e ) {
+            e.printStackTrace();
+        }
+    }
+
     private CIFSContext withAnonymousCredentials () throws CIFSException {
         Properties cfg = new Properties();
         cfg.put("jcifs.smb.client.maxVersion", "SMB1");
-        cfg.put("jcifs.smb.client.useUnicode", "true");
-        cfg.put("jcifs.smb.client.forceUnicode", "true");
-//        cfg.put("jcifs.smb.client.useNtStatus", "true");
-//        cfg.put("jcifs.smb.client.useNTSmbs", "true");
+//        cfg.put("jcifs.smb.client.useUnicode", "false");
+//        cfg.put("jcifs.smb.client.forceUnicode", "false");
+//        cfg.put("jcifs.smb.client.useNtStatus", "false");
+//        cfg.put("jcifs.smb.client.useNTSmbs", "false");
         BaseContext baseContext = new BaseContext(new PropertyConfiguration(cfg));
         return baseContext.withAnonymousCredentials();
     }
@@ -139,14 +168,15 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
             }
             if (wm != null && wm.isWifiEnabled()) {
                 WifiInfo wifi = wm.getConnectionInfo();
-//                if (wifi.getRssi() != -200) {
+                if (wifi.getRssi() != -200) {
                    String myIp = getWifiIPAddress(wifi.getIpAddress());
-//                }
+                    discover(myIp);// 发送arp请求
+                }
 //                myWifiName = wifi.getSSID(); //获取被连接网络的名称
 //                myMac =  wifi.getBSSID(); //获取被连接网络的mac地址
 //                String str = "WIFI: "+myWifiName+"\n"+"WiFiIP: "+myIp+"\n"+"MAC: "+myMac;
 //                connectWifiInfo.setText(str);
-                discover(myIp);// 发送arp请求
+
             }
         } catch (Exception e) {
             e.getMessage();
@@ -195,7 +225,20 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
          */
         //获得选中项中的HashMap对象
         HashMap<String,String> map=(HashMap<String,String>)parent.getItemAtPosition(position);
-        String Text=map.get("ItemText");
-        Toast.makeText(NetWorkActivity.this, Text, Toast.LENGTH_SHORT).show();
+        final String text=map.get("ItemText");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    testBrowseDomain(text);
+                } catch (MalformedURLException e) {
+                    e.printStackTrace();
+                } catch (CIFSException e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+//        Toast.makeText(NetWorkActivity.this, Text, Toast.LENGTH_SHORT).show();
     }
 }

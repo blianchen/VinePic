@@ -51,15 +51,13 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import top.yxgu.pic.net.NetWorkActivity;
-
 public class MainFragment extends BrowseFragment {
     private static final String TAG = "MainFragment";
 
     private static final int BACKGROUND_UPDATE_DELAY = 300;
     private static final int GRID_ITEM_WIDTH = 200;
     private static final int GRID_ITEM_HEIGHT = 200;
-    private static final int NUM_ROWS = 6;
+    private static final int NUM_ROWS = 2;
     private static final int NUM_COLS = 15;
 
     private final Handler mHandler = new Handler();
@@ -84,7 +82,6 @@ public class MainFragment extends BrowseFragment {
 
         Intent i = new Intent("top.yxgu.pic.NetWorkActivity");
         this.startActivity(i);
-
     }
 
     @Override

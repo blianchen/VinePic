@@ -5,21 +5,32 @@ import android.content.Context;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
-import android.util.Log;
+import android.view.View;
+import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.InetAddress;
+import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
+import java.util.Properties;
 
+import jcifs.CIFSContext;
+import jcifs.CIFSException;
+import jcifs.CloseableIterator;
+import jcifs.SmbResource;
+import jcifs.config.PropertyConfiguration;
+import jcifs.context.BaseContext;
+import jcifs.smb.SmbFile;
 import top.yxgu.pic.R;
 
-public class NetWorkActivity extends Activity {
+public class NetWorkActivity extends Activity implements AdapterView.OnItemClickListener {
 
     private GridView gridView;
     private ArrayList<HashMap<String, Object>> list;
@@ -32,8 +43,50 @@ public class NetWorkActivity extends Activity {
         gridView = findViewById(R.id.GridViewNetWork);
         list = new ArrayList<>();
 
-        getNetworkInfo();
-        readArp();
+//        getNetworkInfo();
+//        readArp();
+        getSharePcList();
+    }
+
+    private void getSharePcList() {
+        CIFSContext ctx = null;
+        try {
+            ctx = withAnonymousCredentials();
+
+            try ( SmbFile smbFile = new SmbFile("smb://", ctx) ) {
+                try ( CloseableIterator<SmbResource> it = smbFile.children() ) {
+                    while ( it.hasNext() ) {
+                        try ( SmbResource serv = it.next() ) {
+    //                        System.err.println(serv.getName()+":"+serv.getType()+":"+serv.getLocator().getURL());
+                            HashMap<String, Object> map = new HashMap<>();
+                            map.put("ItemImage", R.drawable.icon_pc);
+                            map.put("ItemText", serv.getName());
+                            list.add(map);
+                        }
+                    }
+
+                    SimpleAdapter sad = new SimpleAdapter(this, list, R.layout.activity_listitem,
+                            new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
+                    gridView.setAdapter(sad);
+                    gridView.setOnItemClickListener(this);
+                }
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
+        } catch (CIFSException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private CIFSContext withAnonymousCredentials () throws CIFSException {
+        Properties cfg = new Properties();
+        cfg.put("jcifs.smb.client.maxVersion", "SMB1");
+        cfg.put("jcifs.smb.client.useUnicode", "true");
+        cfg.put("jcifs.smb.client.forceUnicode", "true");
+//        cfg.put("jcifs.smb.client.useNtStatus", "true");
+//        cfg.put("jcifs.smb.client.useNTSmbs", "true");
+        BaseContext baseContext = new BaseContext(new PropertyConfiguration(cfg));
+        return baseContext.withAnonymousCredentials();
     }
 
     private void readArp() {
@@ -51,11 +104,11 @@ public class NetWorkActivity extends Activity {
                     if (line.length() < 63) continue;
                     if (line.toUpperCase(Locale.US).contains("IP")) continue;
                     ip = line.substring(0, 17).trim();
-                    flag = line.substring(29, 32).trim();
+//                    flag = line.substring(29, 32).trim();
                     mac = line.substring(41, 63).trim();
                     if (mac.contains("00:00:00:00:00:00")) continue;
-                    Log.e("scanner", "readArp: mac= "+mac+" ; ip= "+ip+" ;flag= "+flag);
-                    String arp = "ip: "+ip+" | "+"mac: "+mac+" | "+"flag: "+flag;
+//                    Log.e("scanner", "readArp: mac= "+mac+" ; ip= "+ip+" ;flag= "+flag);
+//                    String arp = "ip: "+ip+" | "+"mac: "+mac+" | "+"flag: "+flag;
                     HashMap<String, Object> map = new HashMap<>();
                     map.put("ItemImage", R.drawable.icon_pc);
                     map.put("ItemText", ip);
@@ -69,7 +122,9 @@ public class NetWorkActivity extends Activity {
             SimpleAdapter sad = new SimpleAdapter(this, list, R.layout.activity_listitem,
                     new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
             gridView.setAdapter(sad);
+            gridView.setOnItemClickListener(this);
         } catch(Exception e) {
+
         }
 
     }
@@ -129,5 +184,18 @@ public class NetWorkActivity extends Activity {
             ip = "";
         }
         return ip;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        /*parent是指当前的listview；
+         *view是当前listview中的item的view的布局,就是可用这个view获取里面控件id后操作控件
+         * position是当前item在listview中适配器的位置
+         * id是当前item在listview里第几行的位置
+         */
+        //获得选中项中的HashMap对象
+        HashMap<String,String> map=(HashMap<String,String>)parent.getItemAtPosition(position);
+        String Text=map.get("ItemText");
+        Toast.makeText(NetWorkActivity.this, Text, Toast.LENGTH_SHORT).show();
     }
 }

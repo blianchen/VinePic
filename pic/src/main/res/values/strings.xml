@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">tool</string>
+    <string name="title_activity_pic">PicActivity</string>
+    <string name="net_work_title">选择共享设备</string>
 </resources>

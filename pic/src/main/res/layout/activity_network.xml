@@ -6,12 +6,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#4b9ca4"
     tools:context="top.yxgu.pic.net.NetWorkActivity">
-
-    <EditText
-        android:layout_width="wrap_content"
-        android:layout_height="40dp"
-        android:text="test"/>
 
     <GridView
         android:id="@+id/GridViewNetWork"
@@ -23,6 +19,5 @@
         android:stretchMode="columnWidth"
         >
     </GridView>
-
 
 </LinearLayout>

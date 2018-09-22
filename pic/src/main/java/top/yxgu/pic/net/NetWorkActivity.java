@@ -2,9 +2,14 @@ package top.yxgu.pic.net;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.LogPrinter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
@@ -31,8 +36,10 @@ import jcifs.smb.SmbFile;
 import jcifs.smb.SmbUnsupportedOperationException;
 import top.yxgu.pic.R;
 
-public class NetWorkActivity extends Activity implements AdapterView.OnItemClickListener {
+public class NetWorkActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
+    private static final String TAG = NetWorkActivity.class.getName();
+    
     private GridView gridView;
     private ArrayList<HashMap<String, Object>> list;
 
@@ -41,18 +48,32 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_network);
 
+        DisplayMetrics dm = new DisplayMetrics();
+        this.getWindowManager().getDefaultDisplay().getMetrics(dm);
+        int width = dm.widthPixels;// 屏幕宽度（像素）
+//        int height= dm.heightPixels; // 屏幕高度（像素）
+        float density = dm.density;//屏幕密度（0.75 / 1.0 / 1.5）
+//        int densityDpi = dm.densityDpi;//屏幕密度dpi（120 / 160 / 240）  == 440
+//        //屏幕宽度算法:屏幕宽度（像素）/屏幕密度
+        int screenWidth = (int) (width/density);//屏幕宽度(dp)  == 698
+//        int screenHeight = (int)(height/density);//屏幕高度(dp) == 392
+//        Log.e("*****", screenWidth + "======" + screenHeight );
+        int col = screenWidth / 120;
+        int wdp = (int)(screenWidth / col * density);
+
         gridView = findViewById(R.id.GridViewNetWork);
+        gridView.setColumnWidth(wdp);
         list = new ArrayList<>();
 
         getNetworkInfo();
         readArp();
+
 //        new Thread(new Runnable() {
 //            @Override
 //            public void run() {
 //                getSharePcList();
 //            }
 //        }).start();
-
     }
 
     private void getSharePcList() {
@@ -119,13 +140,11 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
     }
 
     private void readArp() {
-        try {
-            BufferedReader br = new BufferedReader(
-                    new FileReader("/proc/net/arp"));
-            String line = "";
-            String ip = "";
-            String flag = "";
-            String mac = "";
+        try(BufferedReader br = new BufferedReader(new FileReader("/proc/net/arp"))) {
+            String line;
+            String ip;
+//            String flag = "";
+            String mac;
 
             while ((line = br.readLine()) != null) {
                 try {
@@ -137,25 +156,23 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
                     mac = line.substring(41, 63).trim();
                     if (mac.contains("00:00:00:00:00:00")) continue;
 //                    Log.e("scanner", "readArp: mac= "+mac+" ; ip= "+ip+" ;flag= "+flag);
-//                    String arp = "ip: "+ip+" | "+"mac: "+mac+" | "+"flag: "+flag;
                     HashMap<String, Object> map = new HashMap<>();
                     map.put("ItemImage", R.drawable.icon_pc);
                     map.put("ItemText", ip);
                     list.add(map);
                 } catch (Exception e) {
+                    Log.d(TAG, "readArp: ");
                     continue;
                 }
             }
-            br.close();
 
             SimpleAdapter sad = new SimpleAdapter(this, list, R.layout.activity_listitem,
                     new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
             gridView.setAdapter(sad);
             gridView.setOnItemClickListener(this);
         } catch(Exception e) {
-
+            e.printStackTrace();
         }
-
     }
 
     private void getNetworkInfo() {
@@ -227,18 +244,22 @@ public class NetWorkActivity extends Activity implements AdapterView.OnItemClick
         HashMap<String,String> map=(HashMap<String,String>)parent.getItemAtPosition(position);
         final String text=map.get("ItemText");
 
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    testBrowseDomain(text);
-                } catch (MalformedURLException e) {
-                    e.printStackTrace();
-                } catch (CIFSException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
+        intent.putExtra("top.yxgu.pic.url", "smb://"+text);
+        startActivity(intent);
+
+//        new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                try {
+//                    testBrowseDomain(text);
+//                } catch (MalformedURLException e) {
+//                    e.printStackTrace();
+//                } catch (CIFSException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }).start();
 //        Toast.makeText(NetWorkActivity.this, Text, Toast.LENGTH_SHORT).show();
     }
 }

@@ -3,8 +3,6 @@ apply plugin: 'com.android.library'
 android {
     compileSdkVersion 28
 
-
-
     defaultConfig {
         minSdkVersion 23
         targetSdkVersion 28
@@ -25,10 +23,15 @@ android {
 }
 
 dependencies {
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    implementation fileTree(include: ['*.jar', '*.aar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.0.0-rc02'
+    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
-    implementation 'eu.agno3.jcifs:jcifs-ng:2.1.0'
+    implementation "eu.agno3.jcifs:jcifs-ng:${JCIFS_VERSION}"
+    implementation "com.squareup.okhttp3:okhttp:${OKHTTP3_VERSION}"
+    implementation "com.parse.bolts:bolts-android:${BOLTS_ANDROID_VERSION}"
+    implementation "com.nineoldandroids:library:${NINEOLDANDROID_VERSION}"
+    implementation "com.facebook.soloader:soloader:${SOLOADER_VERSION}"
 }

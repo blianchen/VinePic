@@ -9,6 +9,16 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+
+import java.io.IOException;
+
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+import top.yxgu.pic.ImagePipeline.SmbAndHttpPipelineConfigFactory;
+
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
@@ -108,8 +118,39 @@ public class FullscreenActivity extends AppCompatActivity {
         // while interacting with the UI.
         findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
 
+        initFresco();
+
         Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
         this.startActivity(intent);
+    }
+
+    private void initFresco() {
+        //小图片的磁盘配置,用来储存用户头像之类的小图
+//        DiskCacheConfig diskSmallCacheConfig = DiskCacheConfig.newBuilder(this)
+//                .setBaseDirectoryPath(this.getCacheDir())//缓存图片基路径
+//                .setBaseDirectoryName(getString(R.string.app_name))//文件夹名
+//                .setMaxCacheSize(32 * ByteConstants.MB)//默认缓存的最大大小。
+//                .setMaxCacheSizeOnLowDiskSpace(16 * ByteConstants.MB)//缓存的最大大小,使用设备时低磁盘空间。
+//                .setMaxCacheSizeOnVeryLowDiskSpace(4 * ByteConstants.MB)//缓存的最大大小,当设备极低磁盘空间
+//                .build();
+
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor( new Interceptor() {
+                    @Override
+                    public Response intercept(Chain chain) throws IOException {
+//                        Log.d("ImageLoader", "request-url: " + chain.request().url().toString());
+                        return chain.proceed(chain.request());
+                    }
+                }).build();
+
+        ImagePipelineConfig imagePipelineConfig = SmbAndHttpPipelineConfigFactory.newBuilder(this, client)
+                .setDownsampleEnabled(true)
+                .setResizeAndRotateEnabledForNetwork(true) // 对网络图片进行resize处理，减少内存消耗
+//                .setSmallImageDiskCacheConfig(diskSmallCacheConfig)
+//                .setBitmapsConfig(Bitmap.Config.RGB_565)
+                .build();
+
+        Fresco.initialize(this, imagePipelineConfig);
     }
 
     @Override

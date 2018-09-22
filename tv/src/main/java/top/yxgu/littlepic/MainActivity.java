@@ -18,6 +18,16 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 
+import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.imagepipeline.backends.okhttp3.OkHttpImagePipelineConfigFactory;
+import com.facebook.imagepipeline.core.ImagePipelineConfig;
+
+import java.io.IOException;
+
+import okhttp3.Interceptor;
+import okhttp3.OkHttpClient;
+import okhttp3.Response;
+
 /*
  * MainActivity class that loads {@link MainFragment}.
  */
@@ -27,5 +37,27 @@ public class MainActivity extends Activity {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        initFresco();
+    }
+
+    private void initFresco() {
+        OkHttpClient client = new OkHttpClient.Builder()
+                .addNetworkInterceptor( new Interceptor() {
+                    @Override
+                    public Response intercept(Chain chain) throws IOException {
+//                        Log.d("ImageLoader", "request-url: " + chain.request().url().toString());
+                        return chain.proceed(chain.request());
+                    }
+                }).build();
+
+        ImagePipelineConfig imagePipelineConfig = OkHttpImagePipelineConfigFactory.newBuilder(this, client)
+                .setDownsampleEnabled(true)
+                .setResizeAndRotateEnabledForNetwork(true) // 对网络图片进行resize处理，减少内存消耗
+//                .setSmallImageDiskCacheConfig(diskSmallCacheConfig)
+//                .setBitmapsConfig(Bitmap.Config.RGB_565)
+                .build();
+
+        Fresco.initialize(this, imagePipelineConfig);
     }
 }

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fresco="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".FilelistActivity">
+
+    <GridView
+        android:id="@+id/GridViewFile"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#0096a6"
+        android:numColumns="auto_fit"
+        android:columnWidth="196dp"
+        android:stretchMode="columnWidth">
+
+    </GridView>
+
+</android.support.constraint.ConstraintLayout>

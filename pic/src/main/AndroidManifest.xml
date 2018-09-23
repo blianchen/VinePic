@@ -11,7 +11,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".net.NetWorkActivity"
+        <activity
+            android:name=".net.NetWorkActivity"
             android:theme="@style/Theme.AppCompat">
             <intent-filter>
                 <action android:name="top.yxgu.pic.NetWorkActivity" />
@@ -19,7 +20,8 @@
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-        <activity android:name=".FilelistActivity"
+        <activity
+            android:name=".FilelistActivity"
             android:theme="@style/Theme.AppCompat">
             <intent-filter>
                 <action android:name="top.yxgu.pic.FilelistActivity" />
@@ -32,6 +34,13 @@
             android:label="@string/title_activity_pic">
             <intent-filter>
                 <action android:name="top.yxgu.pic.PicActivity" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".PicPageActivity">
+            <intent-filter>
+                <action android:name="top.yxgu.pic.PicPageActivity" />
 
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>

@@ -1,47 +1,37 @@
 package top.yxgu.pic.net;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.util.LogPrinter;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.GridView;
 import android.widget.SimpleAdapter;
-import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.net.InetAddress;
-import java.net.MalformedURLException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Locale;
-import java.util.Properties;
 
-import jcifs.CIFSContext;
-import jcifs.CIFSException;
-import jcifs.CloseableIterator;
-import jcifs.SmbResource;
-import jcifs.config.PropertyConfiguration;
-import jcifs.context.BaseContext;
-import jcifs.smb.SmbFile;
-import jcifs.smb.SmbUnsupportedOperationException;
 import top.yxgu.pic.R;
 
 public class NetWorkActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private static final String TAG = NetWorkActivity.class.getName();
+
+    private static Handler handler=new Handler();
     
     private GridView gridView;
-    private ArrayList<HashMap<String, Object>> list;
+    private ArrayList<HashMap<String, Object>> dataList;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,80 +53,10 @@ public class NetWorkActivity extends AppCompatActivity implements AdapterView.On
 
         gridView = findViewById(R.id.GridViewNetWork);
         gridView.setColumnWidth(wdp);
-        list = new ArrayList<>();
+        dataList = new ArrayList<>();
 
         getNetworkInfo();
         readArp();
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                getSharePcList();
-//            }
-//        }).start();
-    }
-
-    private void getSharePcList() {
-        CIFSContext ctx = null;
-        try {
-            ctx = withAnonymousCredentials();
-
-            try ( SmbFile smbFile = new SmbFile("smb://", ctx) ) {
-                try ( CloseableIterator<SmbResource> it = smbFile.children() ) {
-                    while ( it.hasNext() ) {
-                        try ( SmbResource serv = it.next() ) {
-    //                        System.err.println(serv.getName()+":"+serv.getType()+":"+serv.getLocator().getURL());
-                            HashMap<String, Object> map = new HashMap<>();
-                            map.put("ItemImage", R.drawable.icon_pc);
-                            map.put("ItemText", serv.getName());
-                            list.add(map);
-                        }
-                    }
-
-                    SimpleAdapter sad = new SimpleAdapter(this, list, R.layout.activity_listitem,
-                            new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
-                    gridView.setAdapter(sad);
-                    gridView.setOnItemClickListener(this);
-                }
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
-        } catch (CIFSException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void testBrowseDomain (String ip) throws MalformedURLException, CIFSException {
-
-        CIFSContext ctx = withAnonymousCredentials();
-
-        try ( SmbFile smbFile = new SmbFile("smb://" + ip, ctx) ) {
-            // if domain is resolved through DNS this will be treated as a server and will enumerate shares instead
-//            Assume.assumeTrue("Not workgroup", SmbConstants.TYPE_WORKGROUP == smbFile.getType());
-            try ( CloseableIterator<SmbResource> it = smbFile.children() ) {
-                if ( it.hasNext() ) {
-                    try ( SmbResource serv = it.next() ) {
-                        System.err.println(serv.getName());
-//                        assertEquals(SmbConstants.TYPE_SERVER, serv.getType());
-//                        assertTrue(serv.isDirectory());
-//                        Toast.makeText(NetWorkActivity.this, serv.getName(), Toast.LENGTH_SHORT).show();
-                    }
-                }
-            }
-        } catch ( SmbUnsupportedOperationException e ) {
-            e.printStackTrace();
-        }
-    }
-
-    private CIFSContext withAnonymousCredentials () throws CIFSException {
-        Properties cfg = new Properties();
-        cfg.put("jcifs.smb.client.maxVersion", "SMB1");
-//        cfg.put("jcifs.smb.client.useUnicode", "false");
-//        cfg.put("jcifs.smb.client.forceUnicode", "false");
-//        cfg.put("jcifs.smb.client.useNtStatus", "false");
-//        cfg.put("jcifs.smb.client.useNTSmbs", "false");
-        BaseContext baseContext = new BaseContext(new PropertyConfiguration(cfg));
-        return baseContext.withAnonymousCredentials();
     }
 
     private void readArp() {
@@ -159,14 +79,14 @@ public class NetWorkActivity extends AppCompatActivity implements AdapterView.On
                     HashMap<String, Object> map = new HashMap<>();
                     map.put("ItemImage", R.drawable.icon_pc);
                     map.put("ItemText", ip);
-                    list.add(map);
+                    dataList.add(map);
                 } catch (Exception e) {
                     Log.d(TAG, "readArp: ");
                     continue;
                 }
             }
 
-            SimpleAdapter sad = new SimpleAdapter(this, list, R.layout.activity_listitem,
+            SimpleAdapter sad = new SimpleAdapter(this, dataList, R.layout.activity_listitem,
                     new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
             gridView.setAdapter(sad);
             gridView.setOnItemClickListener(this);
@@ -242,24 +162,15 @@ public class NetWorkActivity extends AppCompatActivity implements AdapterView.On
          */
         //获得选中项中的HashMap对象
         HashMap<String,String> map=(HashMap<String,String>)parent.getItemAtPosition(position);
-        final String text=map.get("ItemText");
+        String text=map.get("ItemText");
+        String root = "smb://" + text + "/";
 
         Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
-        intent.putExtra("top.yxgu.pic.url", "smb://"+text);
+//        Bundle bundle = new Bundle();
+//        bundle.putString("path", "smb://" + text);
+//        intent.putExtras(bundle);
+        intent.putExtra("top.yxgu.pic.root", root);
         startActivity(intent);
-
-//        new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                try {
-//                    testBrowseDomain(text);
-//                } catch (MalformedURLException e) {
-//                    e.printStackTrace();
-//                } catch (CIFSException e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }).start();
-//        Toast.makeText(NetWorkActivity.this, Text, Toast.LENGTH_SHORT).show();
     }
+
 }

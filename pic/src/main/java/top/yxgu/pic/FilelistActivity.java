@@ -14,31 +14,46 @@ import android.widget.GridView;
 import android.widget.LinearLayout;
 import android.widget.ListAdapter;
 import android.widget.SimpleAdapter;
+import android.widget.Toast;
 
 import com.facebook.drawee.view.SimpleDraweeView;
 
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
+
+import jcifs.CIFSContext;
+import jcifs.CIFSException;
+import jcifs.CloseableIterator;
+import jcifs.SmbResource;
+import jcifs.config.PropertyConfiguration;
+import jcifs.context.BaseContext;
+import jcifs.smb.SmbFile;
+import top.yxgu.pic.net.SmbTools;
 
 public class FilelistActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
     private static final String TAG = "FilelistActivity";
 
-    private String url;
-    private List<Map<String,Object>> dataList;
+    private ArrayList<ItemInfo> dataList;
     private GridView gridView;
+    private String rootPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_filelist);
 
-        Intent intent = getIntent();
-        url = intent.getStringExtra("top.yxgu.pic.url");
 
-        setTitle(url);
+        Intent intent = getIntent();
+//        rootPath = intent.getStringExtra("path");
+        rootPath = intent.getStringExtra("top.yxgu.pic.root");
+        setTitle(rootPath);
 
         DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -48,38 +63,40 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
         int col = screenWidth / 196;
         int wdp = (int)(screenWidth / col * density);
 
-        dataList = new ArrayList<>();
 
-        Uri uri = Uri.parse("http://share.routerlogin.net/shares/U/");
         gridView = findViewById(R.id.GridViewFile);
         gridView.setColumnWidth(wdp);
 
-//        Map<String, Object> map = new HashMap<>();
-//        map.put("ItemImage", "http://share.routerlogin.net/shares/U/Documents/IMG_20171226_124736.jpg");
-//        map.put("ItemText", "IMG_20171226_124736.jpg");
-//        dataList.add(map);
-//        map = new HashMap<>();
-//        map.put("ItemImage", "http://share.routerlogin.net/shares/U/Documents/IMG_20180307_212454.jpg");
-//        map.put("ItemText", "IMG_20180307_212454.jpg");
-//        dataList.add(map);
-//        map = new HashMap<>();
-//        map.put("ItemImage", "http://share.routerlogin.net/shares/U/Documents/IMG_20180317_154847.jpg");
-//        map.put("ItemText", "IMG_20180317_154847.jpg");
-//        dataList.add(map);
+        fillContext();
+    }
 
-        List<ItemInfo> list = new ArrayList<>();
-        ItemInfo item = new ItemInfo("smb://share/storage/Documents/IMG_20171226_124736.jpg", "IMG_20171226_124736.jpg");
-        list.add(item);
-        item = new ItemInfo("smb://share/storage/Documents/IMG_20180307_212454.jpg", "IMG_20180307_212454.jpg");
-        list.add(item);
-        item = new ItemInfo("http://share.routerlogin.net/shares/U/Documents/IMG_20180317_154847.jpg", "IMG_20180317_154847.jpg");
-        list.add(item);
-        item = new ItemInfo("res:///"+R.drawable.icon_folder_pic, "wwwwww");
-        list.add(item);
+    private void fillContext() {
+        Uri uri = Uri.parse(this.rootPath);
+        if ("smb".equals(uri.getScheme())) {
+            new Thread() {
+                @Override
+                public void run() {
+                    try {
+                        dataList = SmbTools.getFileList(rootPath);
+                        if (dataList != null && dataList.size() > 0) {
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    setViewItem();
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(FilelistActivity.this, e.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            }.start();
+        }
+    }
 
-//        SimpleAdapter sad = new SimpleAdapter(this, dataList, R.layout.activity_fileitem,
-////                new String[]{"ItemImage","ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
-        PicListAdapter sad = new PicListAdapter(this, list, R.layout.activity_fileitem);
+    private void setViewItem() {
+        PicListAdapter sad = new PicListAdapter(this, dataList, R.layout.activity_fileitem);
         gridView.setAdapter(sad);
         gridView.setOnItemClickListener(this);
 
@@ -88,21 +105,34 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
         ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
 //        layoutParams.width = 50;
         view.setLayoutParams(layoutParams);
-
-//        ViewGroup.LayoutParams layoutParams = draweeView.getLayoutParams();
-//        layoutParams.width = lineLayout.getWidth();
-//        layoutParams.height = height;
-//        draweeView.setImageURI(uri);
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-//        HashMap<String,String> map=(HashMap<String,String>)parent.getItemAtPosition(position);
-////        final String text=map.get("ItemImage");
         ItemInfo itemInfo = (ItemInfo) parent.getItemAtPosition(position);
 
-        Intent intent = new Intent("top.yxgu.pic.PicActivity");
-        intent.putExtra("top.yxgu.pic.url", itemInfo.url);
-        startActivity(intent);
+        if (itemInfo.type == ItemInfo.TYPE_FOLDER) {
+            Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
+            intent.putExtra("top.yxgu.pic.root", itemInfo.url);
+            startActivity(intent);
+        } else if (itemInfo.type == ItemInfo.TYPE_IMAGE) {
+//            Intent intent = new Intent("top.yxgu.pic.PicActivity");
+//            intent.putExtra("top.yxgu.pic.root", rootPath);
+//            intent.putExtra("top.yxgu.pic.url", itemInfo.url);
+//            startActivity(intent);
+            Intent intent = new Intent("top.yxgu.pic.PicPageActivity");
+            Bundle bundle = new Bundle();
+            bundle.putSerializable("list", this.dataList);
+            bundle.putInt("pos", position);
+            intent.putExtras(bundle);
+            startActivity(intent);
+        } else if (itemInfo.type == ItemInfo.TYPE_MOVIE) {
+//            Intent intent = new Intent(Intent.ACTION_VIEW);
+//            String path = Environment.getExternalStorageDirectory().getPath()+ "/1.mp4";//该路径可以自定义
+//            File file = new File(path);
+//            Uri uri = Uri.fromFile(file);
+//            intent.setDataAndType(uri, "video/*");
+//            startActivity(intent);
+        }
     }
 }

@@ -10,14 +10,13 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
-import com.facebook.drawee.backends.pipeline.PipelineDraweeController;
+import com.facebook.drawee.generic.GenericDraweeHierarchy;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
-import java.net.URI;
 import java.util.List;
 
 public class PicListAdapter extends BaseAdapter {
@@ -63,19 +62,29 @@ public class PicListAdapter extends BaseAdapter {
 
         final SimpleDraweeView v = view.findViewById(R.id.ItemImage);
 
+        GenericDraweeHierarchy hierarchy = v.getHierarchy();
+        if (item.type == ItemInfo.TYPE_FOLDER) {
+//            hierarchy.setPlaceholderImage(R.drawable.icon_folder);
+            v.setImageResource(R.drawable.icon_folder);
+        } else if (item.type == ItemInfo.TYPE_IMAGE) {
+            hierarchy.setPlaceholderImage(R.drawable.icon_pic);
+            int width = 256, height = 256;
+            ImageRequest request =ImageRequestBuilder
+                    .newBuilderWithSource(Uri.parse(item.url))
+                    .setResizeOptions(new ResizeOptions(width, height))
+                    .build();
+            DraweeController controller = Fresco.newDraweeControllerBuilder()
+                    .setImageRequest(request)
+                    .setOldController(v.getController())
+                    .build();
+            v.setController(controller);
+        } else if (item.type == ItemInfo.TYPE_MOVIE) {
+//            hierarchy.setPlaceholderImage(R.drawable.icon_movie);
+            v.setImageResource(R.drawable.icon_movie);
+        } else {
+            v.setImageResource(R.drawable.icon_unknown);
+        }
 
-        int width = 128, height = 128;
-        ImageRequest request =ImageRequestBuilder
-                .newBuilderWithSource(Uri.parse(item.url))
-                .setResizeOptions(new ResizeOptions(width, height))
-                .build();
-        DraweeController controller = Fresco.newDraweeControllerBuilder()
-                .setOldController(v.getController())
-                .setImageRequest(request)
-                .build();
-        v.setController(controller);
-
-//        v.setImageURI(item.url);
         final TextView v1 = view.findViewById(R.id.ItemText);
         v1.setText(item.name);
         return view;

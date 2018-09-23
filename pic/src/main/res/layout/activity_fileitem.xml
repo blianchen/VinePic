@@ -11,7 +11,8 @@
         android:layout_height="172dp"
         fresco:actualImageScaleType="fitCenter"
         android:layout_centerInParent="true"
-        fresco:placeholderImage="@drawable/icon_pic"
+        fresco:placeholderImage="@drawable/icon_unknown"
+        fresco:failureImage="@drawable/icon_err"
         />
     <TextView
         android:id="@+id/ItemText"

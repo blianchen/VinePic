@@ -65,7 +65,7 @@ public class SmbAndHttpFetcher extends BaseNetworkFetcher<SmbAndHttpFetcher.SmbA
 
     private Executor mCancellationExecutor;
 
-    private static final int NUM_NETWORK_THREADS = 3;
+    private static final int NUM_NETWORK_THREADS = 2;
 
 
     public SmbAndHttpFetcher(OkHttpClient okHttpClient) {

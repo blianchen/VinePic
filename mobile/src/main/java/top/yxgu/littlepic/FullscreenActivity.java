@@ -9,6 +9,9 @@ import android.os.Handler;
 import android.view.MotionEvent;
 import android.view.View;
 
+import com.facebook.cache.disk.DiskCacheConfig;
+import com.facebook.common.disk.NoOpDiskTrimmableRegistry;
+import com.facebook.common.util.ByteConstants;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
 
@@ -24,6 +27,15 @@ import top.yxgu.pic.ImagePipeline.SmbAndHttpPipelineConfigFactory;
  * status bar and navigation/system bar) with user interaction.
  */
 public class FullscreenActivity extends AppCompatActivity {
+
+    private static final String IMAGE_PIPELINE_CACHE_DIR = "PipelineCache";
+    //默认图极低磁盘空间缓存的最大值
+    private static final int MAX_DISK_CACHE_VERYLOW_SIZE = 32 * ByteConstants.MB;
+    //默认图低磁盘空间缓存的最大值
+    private static final int MAX_DISK_CACHE_LOW_SIZE = 128 * ByteConstants.MB;
+    //默认图磁盘缓存的最大值
+    private static final int MAX_DISK_CACHE_SIZE = 512 * ByteConstants.MB;
+
     /**
      * Whether or not the system UI should be auto-hidden after
      * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
@@ -134,6 +146,15 @@ public class FullscreenActivity extends AppCompatActivity {
 //                .setMaxCacheSizeOnVeryLowDiskSpace(4 * ByteConstants.MB)//缓存的最大大小,当设备极低磁盘空间
 //                .build();
 
+        DiskCacheConfig diskCacheConfig = DiskCacheConfig.newBuilder(this)
+                .setBaseDirectoryPath(getApplicationContext().getCacheDir())//缓存图片基路径
+                .setBaseDirectoryName(IMAGE_PIPELINE_CACHE_DIR)//文件夹名
+                .setMaxCacheSize(MAX_DISK_CACHE_SIZE)//默认缓存的最大大小。
+                .setMaxCacheSizeOnLowDiskSpace(MAX_DISK_CACHE_LOW_SIZE)//缓存的最大大小,使用设备时低磁盘空间。
+                .setMaxCacheSizeOnVeryLowDiskSpace(MAX_DISK_CACHE_VERYLOW_SIZE)//缓存的最大大小,当设备极低磁盘空间
+                .setDiskTrimmableRegistry(NoOpDiskTrimmableRegistry.getInstance())
+                .build();
+
         OkHttpClient client = new OkHttpClient.Builder()
                 .addNetworkInterceptor( new Interceptor() {
                     @Override
@@ -146,6 +167,7 @@ public class FullscreenActivity extends AppCompatActivity {
         ImagePipelineConfig imagePipelineConfig = SmbAndHttpPipelineConfigFactory.newBuilder(this, client)
                 .setDownsampleEnabled(true)
                 .setResizeAndRotateEnabledForNetwork(true) // 对网络图片进行resize处理，减少内存消耗
+                .setMainDiskCacheConfig(diskCacheConfig)
 //                .setSmallImageDiskCacheConfig(diskSmallCacheConfig)
 //                .setBitmapsConfig(Bitmap.Config.RGB_565)
                 .build();

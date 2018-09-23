@@ -3,7 +3,6 @@ package top.yxgu.pic;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.DisplayMetrics;
@@ -43,7 +42,8 @@ public class PicActivity extends Activity {
         }
     };
 
-    private String url;
+    private String rootPath;
+    private String itemUrl;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -51,21 +51,21 @@ public class PicActivity extends Activity {
         setContentView(R.layout.activity_pic);
 
         Intent intent = getIntent();
-        url = intent.getStringExtra("top.yxgu.pic.url");
+        rootPath = intent.getStringExtra("top.yxgu.pic.root");
+        itemUrl = intent.getStringExtra("top.yxgu.pic.url");
 
         DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
         int width = dm.widthPixels;// 屏幕宽度（像素）
         int height= dm.heightPixels; // 屏幕高度（像素）
 
-//        Uri uri = Uri.parse("http://share.routerlogin.net/shares/U/Documents/IMG_20180414_183057_HHT.jpg");
         draweeView = findViewById(R.id.my_image_view);
 
         ViewGroup.LayoutParams layoutParams = draweeView.getLayoutParams();
         layoutParams.width = width;
         layoutParams.height = height;
 
-        draweeView.setImageURI(url);
+        draweeView.setImageURI(itemUrl);
     }
 
     @Override

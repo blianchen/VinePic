@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    tools:context=".AddServerActivity">
+
+    <ScrollView
+        android:id="@+id/login_form"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/email_login_form"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <EditText
+                android:id="@+id/input_url"
+                android:layout_width="match_parent"
+                android:layout_height="160dp"
+                android:layout_marginTop="32dp"
+                android:hint="@string/prompt_url"
+                android:imeActionId="6"
+                android:imeActionLabel="@string/action_sign_in"
+                android:imeOptions="actionUnspecified"
+                android:inputType="textMultiLine|textUri"
+                android:scrollHorizontally="false"
+                android:singleLine="false"
+                android:textAlignment="viewStart"
+                android:textSize="30dp" />
+
+            <Button
+                android:id="@+id/add_button"
+                style="?android:textAppearanceLarge"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="32dp"
+                android:text="@string/action_sign_in"
+                android:textSize="30dp"
+                android:textStyle="bold" />
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

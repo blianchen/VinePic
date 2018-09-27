@@ -1,39 +1,30 @@
 package top.yxgu.pic;
 
-import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.GridView;
-import android.widget.LinearLayout;
 import android.widget.ListAdapter;
-import android.widget.SimpleAdapter;
 import android.widget.Toast;
 
-import com.facebook.drawee.view.SimpleDraweeView;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-import jcifs.CIFSContext;
-import jcifs.CIFSException;
-import jcifs.CloseableIterator;
-import jcifs.SmbResource;
-import jcifs.config.PropertyConfiguration;
-import jcifs.context.BaseContext;
-import jcifs.smb.SmbFile;
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 import top.yxgu.pic.net.SmbTools;
 
 public class FilelistActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -54,6 +45,9 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
 //        rootPath = intent.getStringExtra("path");
         rootPath = intent.getStringExtra("top.yxgu.pic.root");
         setTitle(rootPath);
+        if (rootPath.charAt(rootPath.length()-1) != '/') {
+            rootPath += "/";
+        }
 
         DisplayMetrics dm = new DisplayMetrics();
         this.getWindowManager().getDefaultDisplay().getMetrics(dm);
@@ -92,7 +86,85 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
                     }
                 }
             }.start();
+        } else if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
+            Request request = new Request.Builder().url(uri.toString()).get().build();
+            OkHttpClient okHttpClient = Global.getOkHttpClient();
+            okHttpClient.newCall(request).enqueue(new Callback() {
+                @Override
+                public void onFailure(Call call, IOException e) {
+                    Log.d(TAG, "http onFailure: "+e.toString());
+                }
+
+                @Override
+                public void onResponse(Call call, Response response) throws IOException {
+                    String body = response.body().string();
+                    dataList = getFileListByHtml(body);
+
+                    if (dataList != null && dataList.size() > 0) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                setViewItem();
+                            }
+                        });
+                    }
+                }
+            });
         }
+    }
+
+    private ArrayList<ItemInfo> getFileListByHtml(String html) {
+        ArrayList<ItemInfo> list = new ArrayList<>();
+        ItemInfo itemInfo;
+
+        Pattern p = Pattern.compile("<a .*href=.+</a>", Pattern.CASE_INSENSITIVE);
+        Matcher m = p.matcher(html);
+        while(m.find()) {
+            String href = m.group(); //找到超链接地址并截取字符串
+            String hrefLow = href.toLowerCase(Locale.ROOT);
+            //有无引号
+            href = href.substring(hrefLow.indexOf("href="));
+            if (href.charAt(5) == '\"') {
+                href = href.substring(6);
+            } else {
+                href = href.substring(5);
+            }
+            //截取到引号或者空格或者到">"结束
+            int idx = href.indexOf("\"");
+            if (idx > 0) {
+                href = href.substring(0, idx);
+            } else {
+                idx = href.indexOf(" ");
+                if (idx > 0) {
+                    href = href.substring(0, idx);
+                } else {
+                    href = href.substring(0, href.indexOf(">"));
+                }
+            }
+
+            String url;
+            String name;
+            int type;
+            Log.d(TAG, "fillContext: "+href);
+            if (href.startsWith("http://") || href.startsWith("https://")) {
+                url = href;
+                name = href.substring(href.lastIndexOf("/")+1);
+            } else {
+                name = href;
+                url = rootPath + name;
+            }
+            if (name.lastIndexOf(".") < 0) {
+                type = ItemInfo.TYPE_FOLDER;
+            } else {
+                type = ItemInfo.getItemType(name);
+                if (type == ItemInfo.TYPE_UNKNOWN) {
+                    continue;
+                }
+            }
+            itemInfo = new ItemInfo(url, name, type);
+            list.add(itemInfo);
+        }
+        return list;
     }
 
     private void setViewItem() {

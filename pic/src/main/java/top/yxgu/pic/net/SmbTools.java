@@ -2,7 +2,6 @@ package top.yxgu.pic.net;
 
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import jcifs.CIFSContext;

@@ -2,4 +2,10 @@
     <string name="app_name">tool</string>
     <string name="title_activity_pic">PicActivity</string>
     <string name="net_work_title">选择共享设备</string>
+    <string name="item_name_local">本地</string>
+    <string name="title_activity_add_server">添加web服务器</string>
+    <string name="prompt_url">web server url</string>
+    <string name="action_sign_in">添加</string>
+    <string name="error_invalid_url">This url is invalid</string>
+    <string name="error_field_required">This field is required</string>
 </resources>

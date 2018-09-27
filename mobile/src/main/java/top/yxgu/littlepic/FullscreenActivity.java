@@ -1,13 +1,18 @@
 package top.yxgu.littlepic;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.os.Handler;
+import android.support.annotation.Nullable;
+import android.support.v7.app.AppCompatActivity;
 import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.GridView;
+import android.widget.SimpleAdapter;
 
 import com.facebook.cache.disk.DiskCacheConfig;
 import com.facebook.common.disk.NoOpDiskTrimmableRegistry;
@@ -15,12 +20,14 @@ import com.facebook.common.util.ByteConstants;
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.imagepipeline.core.ImagePipelineConfig;
 
-import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-import okhttp3.Interceptor;
-import okhttp3.OkHttpClient;
-import okhttp3.Response;
+import top.yxgu.pic.Global;
 import top.yxgu.pic.ImagePipeline.SmbAndHttpPipelineConfigFactory;
+import top.yxgu.pic.ServerListFile;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -36,104 +43,123 @@ public class FullscreenActivity extends AppCompatActivity {
     //默认图磁盘缓存的最大值
     private static final int MAX_DISK_CACHE_SIZE = 512 * ByteConstants.MB;
 
-    /**
-     * Whether or not the system UI should be auto-hidden after
-     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
-     */
-    private static final boolean AUTO_HIDE = true;
+    private GridView mContentView;
 
-    /**
-     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
-     * user interaction before hiding the system UI.
-     */
-    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+    private Button mAddButton;
+    private List<Map<String, Object>> dataList;
+    private SimpleAdapter simpleAdapter;
 
-    /**
-     * Some older devices needs a small delay between UI widget updates
-     * and a change of the status and navigation bar.
-     */
-    private static final int UI_ANIMATION_DELAY = 300;
-    private final Handler mHideHandler = new Handler();
-    private View mContentView;
-    private final Runnable mHidePart2Runnable = new Runnable() {
-        @SuppressLint("InlinedApi")
-        @Override
-        public void run() {
-            // Delayed removal of status and navigation bar
 
-            // Note that some of these constants are new as of API 16 (Jelly Bean)
-            // and API 19 (KitKat). It is safe to use them, as they are inlined
-            // at compile-time and do nothing on earlier devices.
-            mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
-                    | View.SYSTEM_UI_FLAG_FULLSCREEN
-                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
-        }
-    };
-    private View mControlsView;
-    private final Runnable mShowPart2Runnable = new Runnable() {
-        @Override
-        public void run() {
-            // Delayed display of UI elements
-            ActionBar actionBar = getSupportActionBar();
-            if (actionBar != null) {
-                actionBar.show();
-            }
-            mControlsView.setVisibility(View.VISIBLE);
-        }
-    };
-    private boolean mVisible;
-    private final Runnable mHideRunnable = new Runnable() {
-        @Override
-        public void run() {
-            hide();
-        }
-    };
-    /**
-     * Touch listener to use for in-layout UI controls to delay hiding the
-     * system UI. This is to prevent the jarring behavior of controls going away
-     * while interacting with activity UI.
-     */
-    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
-        @Override
-        public boolean onTouch(View view, MotionEvent motionEvent) {
-            if (AUTO_HIDE) {
-                delayedHide(AUTO_HIDE_DELAY_MILLIS);
-            }
-            return false;
-        }
-    };
-
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_fullscreen);
 
-        mVisible = true;
-        mControlsView = findViewById(R.id.fullscreen_content_controls);
-        mContentView = findViewById(R.id.fullscreen_content);
-
-
-        // Set up the user interaction to manually show or hide the system UI.
-        mContentView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                toggle();
-            }
-        });
-
-        // Upon interacting with UI controls, delay any scheduled hide()
-        // operations to prevent the jarring behavior of controls going away
-        // while interacting with the UI.
-        findViewById(R.id.dummy_button).setOnTouchListener(mDelayHideTouchListener);
+        ServerListFile.init(this);
 
         initFresco();
 
-        Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
-        this.startActivity(intent);
+        dataList = getItemList();
+
+        simpleAdapter = new SimpleAdapter(this, dataList, R.layout.activity_listitem,
+                new String[]{"ItemImage", "ItemText"}, new int[]{R.id.ItemImage, R.id.ItemText});
+
+        mContentView = findViewById(R.id.GridViewContent);
+        mContentView.setAdapter(simpleAdapter);
+        mContentView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+
+                } else if (position == 1) {
+                    Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
+                    startActivity(intent);
+                } else {
+                    Map<String, Object> itemMap = dataList.get(position);
+                    String url = (String) itemMap.get("ItemText");
+
+                    Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
+                    intent.putExtra("top.yxgu.pic.root", url);
+                    startActivity(intent);
+                }
+            }
+        });
+
+        mAddButton = findViewById(R.id.AddButton);
+        mAddButton.setOnTouchListener(new Button.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                    //点击按钮未松开时按钮放大
+                    blow_up(mAddButton);
+                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    //点击按钮松开后按钮缩小
+                    narrow(mAddButton);
+                }
+                return false;
+            }
+        });
+        mAddButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent("top.yxgu.pic.AddServerActivity");
+                startActivityForResult(intent, 1);
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if (requestCode == 1 && resultCode == 1) {
+            dataList.clear();
+            ArrayList<Map<String, Object>> list = getItemList();
+            dataList.addAll(list);
+            simpleAdapter.notifyDataSetChanged();
+        }
+    }
+
+    private ArrayList<Map<String, Object>> getItemList() {
+        ArrayList<Map<String, Object>> list = new ArrayList<>();
+        Map<String, Object> map = new HashMap<>();
+        map.put("ItemImage", R.drawable.my_computer);
+        map.put("ItemText", "本地");
+        list.add(map);
+        map = new HashMap<>();
+        map.put("ItemImage", R.drawable.smb_server);
+        map.put("ItemText", "局域网");
+        list.add(map);
+        map = new HashMap<>();
+        map.put("ItemImage", R.drawable.http_server);
+        map.put("ItemText", "http://share.routerlogin.net/shares/U/Documents/");
+        list.add(map);
+
+        List<String> srvList = ServerListFile.get();
+        for (String str : srvList) {
+            map = new HashMap<>();
+            map.put("ItemImage", R.drawable.http_server);
+            map.put("ItemText", str);
+            list.add(map);
+        }
+        return list;
+    }
+
+    //放大按钮动画
+    private void blow_up(View v) {
+        float[] vaules = new float[]{1.0f, 1.1f, 1.2f, 1.3f, 1.4f, 1.5f};
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(ObjectAnimator.ofFloat(v, "scaleX", vaules), ObjectAnimator.ofFloat(v, "scaleY", vaules));
+        set.setDuration(150);
+        set.start();
+    }
+    //缩小按钮动画
+    private void narrow(View v) {
+        float[] vaules = new float[]{1.5f, 1.4f, 1.3f, 1.2f, 1.1f, 1.0f};
+        AnimatorSet set = new AnimatorSet();
+        set.playTogether(ObjectAnimator.ofFloat(v, "scaleX", vaules), ObjectAnimator.ofFloat(v, "scaleY", vaules));
+        set.setDuration(150);
+        set.start();
     }
 
     private void initFresco() {
@@ -155,16 +181,7 @@ public class FullscreenActivity extends AppCompatActivity {
                 .setDiskTrimmableRegistry(NoOpDiskTrimmableRegistry.getInstance())
                 .build();
 
-        OkHttpClient client = new OkHttpClient.Builder()
-                .addNetworkInterceptor( new Interceptor() {
-                    @Override
-                    public Response intercept(Chain chain) throws IOException {
-//                        Log.d("ImageLoader", "request-url: " + chain.request().url().toString());
-                        return chain.proceed(chain.request());
-                    }
-                }).build();
-
-        ImagePipelineConfig imagePipelineConfig = SmbAndHttpPipelineConfigFactory.newBuilder(this, client)
+        ImagePipelineConfig imagePipelineConfig = SmbAndHttpPipelineConfigFactory.newBuilder(this, Global.getOkHttpClient())
                 .setDownsampleEnabled(true)
                 .setResizeAndRotateEnabledForNetwork(true) // 对网络图片进行resize处理，减少内存消耗
                 .setMainDiskCacheConfig(diskCacheConfig)
@@ -178,53 +195,6 @@ public class FullscreenActivity extends AppCompatActivity {
     @Override
     protected void onPostCreate(Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        // Trigger the initial hide() shortly after the activity has been
-        // created, to briefly hint to the user that UI controls
-        // are available.
-        delayedHide(100);
     }
 
-    private void toggle() {
-        if (mVisible) {
-            hide();
-        } else {
-            show();
-        }
-    }
-
-    private void hide() {
-        // Hide UI first
-        ActionBar actionBar = getSupportActionBar();
-        if (actionBar != null) {
-            actionBar.hide();
-        }
-        mControlsView.setVisibility(View.GONE);
-        mVisible = false;
-
-        // Schedule a runnable to remove the status and navigation bar after a delay
-        mHideHandler.removeCallbacks(mShowPart2Runnable);
-        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    @SuppressLint("InlinedApi")
-    private void show() {
-        // Show the system bar
-        mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        mVisible = true;
-
-        // Schedule a runnable to display UI elements after a delay
-        mHideHandler.removeCallbacks(mHidePart2Runnable);
-        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
-    }
-
-    /**
-     * Schedules a call to hide() in delay milliseconds, canceling any
-     * previously scheduled calls.
-     */
-    private void delayedHide(int delayMillis) {
-        mHideHandler.removeCallbacks(mHideRunnable);
-        mHideHandler.postDelayed(mHideRunnable, delayMillis);
-    }
 }

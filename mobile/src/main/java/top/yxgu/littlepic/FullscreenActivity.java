@@ -7,6 +7,9 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.view.ContextMenu;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.AdapterView;
@@ -71,21 +74,22 @@ public class FullscreenActivity extends AppCompatActivity {
         mContentView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
+                Map<String, Object> itemMap = dataList.get(position);
+                String url = (String) itemMap.get("ItemText");
 
-                } else if (position == 1) {
+                if (ServerListFile.NAME_LOCAL_STORAGE.equals(url)) {
+
+                } else if (ServerListFile.NAME_LOCAL_NETWORK.equals(url)) {
                     Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
                     startActivity(intent);
                 } else {
-                    Map<String, Object> itemMap = dataList.get(position);
-                    String url = (String) itemMap.get("ItemText");
-
                     Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
                     intent.putExtra("top.yxgu.pic.root", url);
                     startActivity(intent);
                 }
             }
         });
+        this.registerForContextMenu(mContentView);
 
         mAddButton = findViewById(R.id.AddButton);
         mAddButton.setOnTouchListener(new Button.OnTouchListener() {
@@ -122,23 +126,18 @@ public class FullscreenActivity extends AppCompatActivity {
 
     private ArrayList<Map<String, Object>> getItemList() {
         ArrayList<Map<String, Object>> list = new ArrayList<>();
-        Map<String, Object> map = new HashMap<>();
-        map.put("ItemImage", R.drawable.my_computer);
-        map.put("ItemText", "本地");
-        list.add(map);
-        map = new HashMap<>();
-        map.put("ItemImage", R.drawable.smb_server);
-        map.put("ItemText", "局域网");
-        list.add(map);
-        map = new HashMap<>();
-        map.put("ItemImage", R.drawable.http_server);
-        map.put("ItemText", "http://share.routerlogin.net/shares/U/Documents/");
-        list.add(map);
+        Map<String, Object> map;
 
         List<String> srvList = ServerListFile.get();
         for (String str : srvList) {
             map = new HashMap<>();
-            map.put("ItemImage", R.drawable.http_server);
+            if (ServerListFile.NAME_LOCAL_STORAGE.equals(str)) {
+                map.put("ItemImage", R.drawable.my_computer);
+            } else if (ServerListFile.NAME_LOCAL_NETWORK.equals(str)) {
+                map.put("ItemImage", R.drawable.smb_server);
+            } else {
+                map.put("ItemImage", R.drawable.http_server);
+            }
             map.put("ItemText", str);
             list.add(map);
         }
@@ -160,6 +159,28 @@ public class FullscreenActivity extends AppCompatActivity {
         set.playTogether(ObjectAnimator.ofFloat(v, "scaleX", vaules), ObjectAnimator.ofFloat(v, "scaleY", vaules));
         set.setDuration(150);
         set.start();
+    }
+
+    @Override
+    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+        menu.add(0, 1, Menu.NONE, " 删 除 ");
+    }
+
+    @Override
+    public boolean onContextItemSelected(MenuItem item) {
+        AdapterView.AdapterContextMenuInfo menuInfo = (AdapterView.AdapterContextMenuInfo)item.getMenuInfo();
+        int pos = (int)mContentView.getAdapter().getItemId(menuInfo.position);
+        switch (item.getItemId()) {
+            case 1: {
+                if (dataList.remove(pos) != null) {
+                    ServerListFile.remove(pos);
+                    simpleAdapter.notifyDataSetChanged();
+                }
+            }
+            default:
+                super.onContextItemSelected(item);
+        }
+        return true;
     }
 
     private void initFresco() {

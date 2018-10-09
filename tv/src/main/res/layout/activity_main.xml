@@ -1,10 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main_browse_fragment"
-    android:name="top.yxgu.littlepic.MainFragment"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity"
-    tools:deviceIds="tv"
-    tools:ignore="MergeRootFrame" />
+    android:background="#0099cc"
+    tools:context=".MainActivity">
+
+    <GridView
+        android:id="@+id/GridViewContent"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="auto_fit"
+        android:columnWidth="128dp"
+        android:stretchMode="columnWidth"
+        />
+
+    <Button
+        android:id="@+id/AddButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/add"
+        android:layout_gravity="bottom|end"
+        />
+
+</FrameLayout>

@@ -3,10 +3,18 @@ package top.yxgu.littlepic;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
+import android.content.ContentUris;
+import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,12 +39,14 @@ import java.util.Map;
 import top.yxgu.pic.Global;
 import top.yxgu.pic.ImagePipeline.SmbAndHttpPipelineConfigFactory;
 import top.yxgu.pic.ServerListFile;
+import top.yxgu.pic.Tools;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
  * status bar and navigation/system bar) with user interaction.
  */
 public class FullscreenActivity extends AppCompatActivity {
+    private static final String TAG = "FullscreenActivity";
 
     private static final String IMAGE_PIPELINE_CACHE_DIR = "PipelineCache";
     //默认图极低磁盘空间缓存的最大值
@@ -45,6 +55,11 @@ public class FullscreenActivity extends AppCompatActivity {
     private static final int MAX_DISK_CACHE_LOW_SIZE = 128 * ByteConstants.MB;
     //默认图磁盘缓存的最大值
     private static final int MAX_DISK_CACHE_SIZE = 512 * ByteConstants.MB;
+
+    private static final int REQUEST_ALBUM_PATH = 2;
+    private static final int REQUEST_ADD_SERVER = 1;
+
+    private String albumPath = null;
 
     private GridView mContentView;
 
@@ -62,6 +77,10 @@ public class FullscreenActivity extends AppCompatActivity {
 
         ServerListFile.init(this);
 
+        Intent albumIntent = new Intent(Intent.ACTION_PICK);
+        albumIntent.setType("image/*");
+        this.startActivityForResult(albumIntent, REQUEST_ALBUM_PATH);
+
         initFresco();
 
         dataList = getItemList();
@@ -78,7 +97,9 @@ public class FullscreenActivity extends AppCompatActivity {
                 String url = (String) itemMap.get("ItemText");
 
                 if (ServerListFile.NAME_LOCAL_STORAGE.equals(url)) {
-
+                    Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
+                    intent.putExtra("top.yxgu.pic.root", albumPath);
+                    startActivity(intent);
                 } else if (ServerListFile.NAME_LOCAL_NETWORK.equals(url)) {
                     Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
                     startActivity(intent);
@@ -109,20 +130,24 @@ public class FullscreenActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent("top.yxgu.pic.AddServerActivity");
-                startActivityForResult(intent, 1);
+                startActivityForResult(intent, REQUEST_ADD_SERVER);
             }
         });
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        if (requestCode == 1 && resultCode == 1) {
+        if (requestCode == REQUEST_ADD_SERVER && resultCode == 1) {
             dataList.clear();
             ArrayList<Map<String, Object>> list = getItemList();
             dataList.addAll(list);
             simpleAdapter.notifyDataSetChanged();
+        } else if (requestCode == REQUEST_ALBUM_PATH) {
+            Uri uri = data.getData();
+            this.albumPath = Tools.getRealPath(this, uri);
         }
     }
+
 
     private ArrayList<Map<String, Object>> getItemList() {
         ArrayList<Map<String, Object>> list = new ArrayList<>();

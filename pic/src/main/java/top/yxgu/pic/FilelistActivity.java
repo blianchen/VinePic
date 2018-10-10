@@ -15,7 +15,6 @@ import android.widget.Toast;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,7 +24,6 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import top.yxgu.pic.net.SmbTools;
 
 public class FilelistActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
@@ -71,7 +69,7 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
                 @Override
                 public void run() {
                     try {
-                        dataList = SmbTools.getFileList(rootPath);
+                        dataList = Tools.getFileList(rootPath);
                         if (dataList != null && dataList.size() > 0) {
                             runOnUiThread(new Runnable() {
                                 @Override

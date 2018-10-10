@@ -74,6 +74,13 @@ public class PicPageAdapter extends PagerAdapter {
             ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width, height);
             view.setLayoutParams(layoutParams);
 
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    return false;
+                }
+            });
+
             GenericDraweeHierarchy hierarchy = view.getHierarchy();
             hierarchy.setActualImageScaleType(ScalingUtils.ScaleType.FIT_CENTER);
             hierarchy.setPlaceholderImage(R.drawable.icon_pic, ScalingUtils.ScaleType.CENTER_INSIDE);

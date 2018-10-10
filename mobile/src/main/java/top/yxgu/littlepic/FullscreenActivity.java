@@ -3,18 +3,11 @@ package top.yxgu.littlepic;
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
 import android.annotation.SuppressLint;
-import android.content.ContentUris;
-import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
-import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.DocumentsContract;
-import android.provider.MediaStore;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -39,7 +32,6 @@ import java.util.Map;
 import top.yxgu.pic.Global;
 import top.yxgu.pic.ImagePipeline.SmbAndHttpPipelineConfigFactory;
 import top.yxgu.pic.ServerListFile;
-import top.yxgu.pic.Tools;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -77,9 +69,13 @@ public class FullscreenActivity extends AppCompatActivity {
 
         ServerListFile.init(this);
 
-        Intent albumIntent = new Intent(Intent.ACTION_PICK);
-        albumIntent.setType("image/*");
-        this.startActivityForResult(albumIntent, REQUEST_ALBUM_PATH);
+//        Intent albumIntent = new Intent(Intent.ACTION_GET_CONTENT);
+//        albumIntent.setType("image/*");
+//        this.startActivityForResult(albumIntent, REQUEST_ALBUM_PATH);
+        albumPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath();
+//        if (!albumPath.startsWith("file:")) {
+//            albumPath = "file:/" + albumPath;
+//        }
 
         initFresco();
 
@@ -142,9 +138,9 @@ public class FullscreenActivity extends AppCompatActivity {
             ArrayList<Map<String, Object>> list = getItemList();
             dataList.addAll(list);
             simpleAdapter.notifyDataSetChanged();
-        } else if (requestCode == REQUEST_ALBUM_PATH) {
-            Uri uri = data.getData();
-            this.albumPath = Tools.getRealPath(this, uri);
+//        } else if (requestCode == REQUEST_ALBUM_PATH) {
+//            Uri uri = data.getData();
+//            this.albumPath = Tools.getRealPath(this, uri);
         }
     }
 

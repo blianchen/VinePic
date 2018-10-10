@@ -48,7 +48,7 @@ public class PicPageActivity extends Activity {
         PicPageAdapter adapter = new PicPageAdapter(this, dataList, width, height);
         viewPager.setAdapter(adapter);
         viewPager.setCurrentItem(currPos);
-        viewPager.setPageTransformer(true, new DepthPageTransformer());
+//        viewPager.setPageTransformer(true, new DepthPageTransformer());
         viewPager.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
@@ -57,6 +57,15 @@ public class PicPageActivity extends Activity {
                 return false;
             }
         });
+
+//        viewPager.setOnLongClickListener(new View.OnLongClickListener() {
+//            @Override
+//            public boolean onLongClick(View v) {
+//                return false;
+//            }
+//        });
+//
+//        this.registerForContextMenu(viewPager);
 
         handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
     }
@@ -72,7 +81,7 @@ public class PicPageActivity extends Activity {
             switch (msg.what) {
                 case MSG_AUTO_PLAY:
                     viewPager.setCurrentItem(++currPos);
-                    handler.sendEmptyMessageDelayed(MSG_AUTO_PLAY, 3000);
+                    handler.sendEmptyMessageDelayed(MSG_AUTO_PLAY, 5000);
                     break;
                 case MSG_START_AUTO_PLAY:
                     handler.sendEmptyMessageDelayed(MSG_AUTO_PLAY, 60000 * 5);
@@ -82,15 +91,15 @@ public class PicPageActivity extends Activity {
     }
 
 
-    @Override
-    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-        menu.add(0, 1, Menu.NONE, " 自动播放 ");
-    }
-
-    @Override
-    public boolean onContextItemSelected(MenuItem item) {
-        handler.sendEmptyMessage(AutoHandler.MSG_AUTO_PLAY);
-        super.onContextItemSelected(item);
-        return true;
-    }
+//    @Override
+//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
+//        menu.add(0, 1, Menu.NONE, " 自动播放 ");
+//    }
+//
+//    @Override
+//    public boolean onContextItemSelected(MenuItem item) {
+//        handler.sendEmptyMessage(AutoHandler.MSG_AUTO_PLAY);
+//        super.onContextItemSelected(item);
+//        return true;
+//    }
 }

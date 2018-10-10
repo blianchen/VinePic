@@ -1,8 +1,13 @@
 package top.yxgu.pic;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -13,6 +18,7 @@ import android.widget.GridView;
 import android.widget.ListAdapter;
 import android.widget.Toast;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Locale;
@@ -108,7 +114,57 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
                     }
                 }
             });
+        } else {
+            if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+            } else {
+                dataList = getFileListLocal(this.rootPath);
+                setViewItem();
+            }
         }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 1:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dataList = getFileListLocal(this.rootPath);
+                    setViewItem();
+                } else {
+                    Toast.makeText(this,"你没有开启权限",Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    private ArrayList<ItemInfo> getFileListLocal(String rootPath) {
+        ArrayList<ItemInfo> list = new ArrayList<>();
+        ItemInfo itemInfo;
+
+        String url;
+        String name;
+        int type;
+
+        File dir = new File(rootPath);
+        if (dir.exists() && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            for (File file:files) {
+                url = file.getAbsolutePath();
+                name = file.getName();
+                if (file.isDirectory()) {
+                    type = ItemInfo.TYPE_FOLDER;
+                } else {
+                    type = ItemInfo.getItemType(url);
+                    url = "file://" + url;
+                }
+                itemInfo = new ItemInfo(url, name, type);
+                list.add(itemInfo);
+            }
+        }
+        return list;
     }
 
     private ArrayList<ItemInfo> getFileListByHtml(String html) {

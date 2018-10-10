@@ -1,10 +1,7 @@
 package top.yxgu.pic;
 
 
-import android.net.Uri;
-
 import java.io.Serializable;
-import java.net.URI;
 
 public class ItemInfo implements Serializable {
     public static final int TYPE_UNKNOWN = 0;

@@ -5,6 +5,7 @@ import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -68,12 +69,13 @@ public class PicListAdapter extends BaseAdapter {
 
         final SimpleDraweeView v = view.findViewById(R.id.ItemImage);
 
-        GenericDraweeHierarchy hierarchy = v.getHierarchy();
+        final GenericDraweeHierarchy hierarchy = v.getHierarchy();
         if (item.type == ItemInfo.TYPE_FOLDER) {
 //            hierarchy.setPlaceholderImage(R.drawable.icon_folder);
             v.setImageResource(R.drawable.icon_folder);
         } else if (item.type == ItemInfo.TYPE_IMAGE) {
             hierarchy.setPlaceholderImage(R.drawable.icon_pic);
+            hierarchy.setOverlayImage(null);
             int width = 256, height = 256;
             ImageRequest request =ImageRequestBuilder
                     .newBuilderWithSource(Uri.parse(item.url))
@@ -86,8 +88,6 @@ public class PicListAdapter extends BaseAdapter {
             v.setController(controller);
         } else if (item.type == ItemInfo.TYPE_MOVIE) {
             hierarchy.setPlaceholderImage(R.drawable.icon_movie);
-            hierarchy.setOverlayImage(this.mContext.getResources().getDrawable(R.drawable.icon_movie, null));
-//            v.setImageResource(R.drawable.icon_movie);
             int width = 256, height = 256;
             ImageRequest request =ImageRequestBuilder
                     .newBuilderWithSource(Uri.parse(item.url))
@@ -95,11 +95,13 @@ public class PicListAdapter extends BaseAdapter {
                     .build();
             DraweeController controller = Fresco.newDraweeControllerBuilder()
                     .setImageRequest(request)
-//                    .setControllerListener(new BaseControllerListener<ImageInfo>(){
-//                        @Override
-//                        public void onFinalImageSet(String id, @Nullable ImageInfo imageInfo, @Nullable Animatable animatable) {
-//                        }
-//                    })
+                    .setControllerListener(new BaseControllerListener<ImageInfo>(){
+                        @Override
+                        public void onFinalImageSet(String id, @Nullable ImageInfo imageInfo, @Nullable Animatable animatable) {
+                            Log.i("DraweeController", "onFinalImageSet: ");
+                            hierarchy.setOverlayImage(mContext.getResources().getDrawable(R.drawable.icon_play, null));
+                        }
+                    })
                     .setOldController(v.getController())
                     .build();
             v.setController(controller);

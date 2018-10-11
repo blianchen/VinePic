@@ -2,6 +2,7 @@ package top.yxgu.pic;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,6 +70,11 @@ public class PicPageAdapter extends PagerAdapter {
     }
 
     @Override
+    public void setPrimaryItem(@NonNull ViewGroup container, int position, @NonNull Object object) {
+        super.setPrimaryItem(container, position, object);
+    }
+
+    @Override
     public Object instantiateItem(ViewGroup container, int position) {
         ItemInfo item = mDatas.get(position);
 
@@ -81,7 +87,7 @@ public class PicPageAdapter extends PagerAdapter {
                 view = mVideoCache.removeFirst();
             }
             view.setUp(item.url, item.name, Jzvd.SCREEN_WINDOW_NORMAL);
-            view.startVideo();
+//            view.startVideo();
             pageView = view;
         } else {
             SimpleDraweeView view;
@@ -137,6 +143,7 @@ public class PicPageAdapter extends PagerAdapter {
 //        });
 //        view.setController(controller.build());
 //        view.setImageURI(mDatas.get(position).url);
+        pageView.setTag(position);
         container.addView(pageView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         return pageView;
     }

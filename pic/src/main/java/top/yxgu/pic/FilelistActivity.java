@@ -70,7 +70,7 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
 
     private void fillContext() {
         Uri uri = Uri.parse(this.rootPath);
-        if ("smb".equals(uri.getScheme())) {
+        if ("smb".equalsIgnoreCase(uri.getScheme())) {
             new Thread() {
                 @Override
                 public void run() {
@@ -90,7 +90,7 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
                     }
                 }
             }.start();
-        } else if ("http".equals(uri.getScheme()) || "https".equals(uri.getScheme())) {
+        } else if ("http".equalsIgnoreCase(uri.getScheme()) || "https".equals(uri.getScheme())) {
             Request request = new Request.Builder().url(uri.toString()).get().build();
             OkHttpClient okHttpClient = Global.getOkHttpClient();
             okHttpClient.newCall(request).enqueue(new Callback() {
@@ -114,11 +114,13 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
                     }
                 }
             });
-        } else {
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
             if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!=PackageManager.PERMISSION_GRANTED){
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
             } else {
-                dataList = getFileListLocal(this.rootPath);
+                String path = uri.toString();
+                path = path.substring(7);
+                dataList = getFileListLocal(path);
                 setViewItem();
             }
         }
@@ -129,7 +131,9 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
         switch (requestCode){
             case 1:
                 if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    dataList = getFileListLocal(this.rootPath);
+                    String path = this.rootPath;
+                    path = path.substring(7);
+                    dataList = getFileListLocal(path);
                     setViewItem();
                 } else {
                     Toast.makeText(this,"你没有开启权限",Toast.LENGTH_SHORT).show();
@@ -152,13 +156,12 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
         if (dir.exists() && dir.isDirectory()) {
             File[] files = dir.listFiles();
             for (File file:files) {
-                url = file.getAbsolutePath();
+                url = "file://" + file.getAbsolutePath();
                 name = file.getName();
                 if (file.isDirectory()) {
                     type = ItemInfo.TYPE_FOLDER;
                 } else {
                     type = ItemInfo.getItemType(url);
-                    url = "file://" + url;
                 }
                 itemInfo = new ItemInfo(url, name, type);
                 list.add(itemInfo);
@@ -226,11 +229,11 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
         gridView.setAdapter(sad);
         gridView.setOnItemClickListener(this);
 
-        ListAdapter listAdapter = gridView.getAdapter();
-        View view = listAdapter.getView(0, null, gridView);
-        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
-//        layoutParams.width = 50;
-        view.setLayoutParams(layoutParams);
+//        ListAdapter listAdapter = gridView.getAdapter();
+//        View view = listAdapter.getView(0, null, gridView);
+//        ViewGroup.LayoutParams layoutParams = view.getLayoutParams();
+////        layoutParams.width = 50;
+//        view.setLayoutParams(layoutParams);
     }
 
     @Override

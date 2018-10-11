@@ -73,9 +73,9 @@ public class FullscreenActivity extends AppCompatActivity {
 //        albumIntent.setType("image/*");
 //        this.startActivityForResult(albumIntent, REQUEST_ALBUM_PATH);
         albumPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath();
-//        if (!albumPath.startsWith("file:")) {
-//            albumPath = "file:/" + albumPath;
-//        }
+        if (!albumPath.startsWith("file://")) {
+            albumPath = "file://" + albumPath;
+        }
 
         initFresco();
 

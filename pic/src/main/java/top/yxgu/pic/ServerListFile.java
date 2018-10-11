@@ -35,7 +35,7 @@ public class ServerListFile {
         } catch (FileNotFoundException e) {
             list.add(NAME_LOCAL_STORAGE);
             list.add(NAME_LOCAL_NETWORK);
-            list.add("http://share.routerlogin.net/shares/U/Documents/");
+            list.add("http://share.routerlogin.net/shares/R/");
             saveToFile();
         } catch (Exception e) {
             e.printStackTrace();

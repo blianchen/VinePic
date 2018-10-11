@@ -1,5 +1,6 @@
 package top.yxgu.pic;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -11,6 +12,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import java.util.List;
 
@@ -24,7 +26,9 @@ public class PicPageActivity extends Activity {
     private List<ItemInfo> dataList;
 
     private Handler handler = new AutoHandler();
+    private boolean isAutoPlay = false;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -46,25 +50,43 @@ public class PicPageActivity extends Activity {
 
         PicPageAdapter adapter = new PicPageAdapter(this, dataList, width, height);
         viewPager.setAdapter(adapter);
-        viewPager.setCurrentItem(currPos);
+
 //        viewPager.setPageTransformer(true, new DepthPageTransformer());
         viewPager.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
                 handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+                isAutoPlay = false;
                 handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
                 return false;
             }
         });
 
-//        viewPager.setOnLongClickListener(new View.OnLongClickListener() {
-//            @Override
-//            public boolean onLongClick(View v) {
-//                return false;
-//            }
-//        });
-//
-//        this.registerForContextMenu(viewPager);
+        viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
+            @Override
+            public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+            }
+
+            @Override
+            public void onPageSelected(int position) {
+//                Log.i("OnPageChangeListener", "onPageSelected: "+position);
+                currPos = position;
+                JzvdStd.releaseAllVideos();
+                View view = viewPager.findViewWithTag(position);
+                Log.i("OnPageChangeListener", "onPageSelected: "+ position + ", view:"+view);
+                if (view!=null && view instanceof JzvdStd) {
+                    ((JzvdStd)view).startVideo();
+                }
+            }
+
+            @Override
+            public void onPageScrollStateChanged(int state) {
+                Log.i("OnPageChangeListener", "onPageScrollStateChanged: "+state);
+            }
+        });
+
+        viewPager.setCurrentItem(currPos);
 
         handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
     }
@@ -79,8 +101,10 @@ public class PicPageActivity extends Activity {
             Log.d("AutoHandler", "receive message " + msg.what);
             switch (msg.what) {
                 case MSG_AUTO_PLAY:
+                    isAutoPlay = true;
                     viewPager.setCurrentItem(++currPos);
                     handler.sendEmptyMessageDelayed(MSG_AUTO_PLAY, 5000);
+                    Toast.makeText(PicPageActivity.this, "开始幻灯片播放", Toast.LENGTH_SHORT);
                     break;
                 case MSG_START_AUTO_PLAY:
                     handler.sendEmptyMessageDelayed(MSG_AUTO_PLAY, 60000 * 5);
@@ -112,6 +136,7 @@ public class PicPageActivity extends Activity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        JzvdStd.releaseAllVideos();
         handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
     }
 }

@@ -16,9 +16,11 @@ package top.yxgu.littlepic;
 
 import android.animation.AnimatorSet;
 import android.animation.ObjectAnimator;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.view.ContextMenu;
@@ -69,12 +71,20 @@ public class MainActivity extends AppCompatActivity {
     private List<Map<String, Object>> dataList;
     private SimpleAdapter simpleAdapter;
 
+    private String albumPath = null;
+
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         ServerListFile.init(this);
+
+        albumPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getAbsolutePath();
+        if (!albumPath.startsWith("file://")) {
+            albumPath = "file://" + albumPath;
+        }
 
         initFresco();
 
@@ -92,7 +102,9 @@ public class MainActivity extends AppCompatActivity {
                 String url = (String) itemMap.get("ItemText");
 
                 if (ServerListFile.NAME_LOCAL_STORAGE.equals(url)) {
-
+                    Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
+                    intent.putExtra("top.yxgu.pic.root", albumPath);
+                    startActivity(intent);
                 } else if (ServerListFile.NAME_LOCAL_NETWORK.equals(url)) {
                     Intent intent = new Intent("top.yxgu.pic.NetWorkActivity");
                     startActivity(intent);

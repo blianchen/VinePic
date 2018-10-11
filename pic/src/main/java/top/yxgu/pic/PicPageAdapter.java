@@ -19,10 +19,14 @@ import com.facebook.imagepipeline.request.ImageRequestBuilder;
 import java.util.LinkedList;
 import java.util.List;
 
+import cn.jzvd.Jzvd;
+import cn.jzvd.JzvdStd;
+
 public class PicPageAdapter extends PagerAdapter {
 
     private List<ItemInfo> mDatas;//数据源
     private LinkedList<SimpleDraweeView> mViewCache;//缓存view
+    private LinkedList<JzvdStd> mVideoCache;
     private Context mContext;
     private int mChildCount;
 
@@ -33,6 +37,7 @@ public class PicPageAdapter extends PagerAdapter {
         this.mContext = context;
         this.mDatas = list;
         mViewCache = new LinkedList<>();
+        mVideoCache = new LinkedList<>();
         this.width = width;
         this.height = height;
     }
@@ -67,38 +72,53 @@ public class PicPageAdapter extends PagerAdapter {
     public Object instantiateItem(ViewGroup container, int position) {
         ItemInfo item = mDatas.get(position);
 
-        SimpleDraweeView view;
-        if (mViewCache.size() == 0) {
-            view = new SimpleDraweeView(mContext);
-            view.setBackgroundColor(0xff000000);
-            ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width, height);
-            view.setLayoutParams(layoutParams);
-
-            view.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    return false;
-                }
-            });
-
-            GenericDraweeHierarchy hierarchy = view.getHierarchy();
-            hierarchy.setActualImageScaleType(ScalingUtils.ScaleType.FIT_CENTER);
-            hierarchy.setPlaceholderImage(R.drawable.icon_pic, ScalingUtils.ScaleType.CENTER_INSIDE);
-            hierarchy.setFailureImage(R.drawable.icon_err, ScalingUtils.ScaleType.CENTER_INSIDE);
-            hierarchy.setProgressBarImage(new AutoRotateDrawable(mContext.getResources().getDrawable(R.drawable.icon_progress_bar, null), 2000), ScalingUtils.ScaleType.CENTER_INSIDE);
+        View pageView;
+        if (item.type == ItemInfo.TYPE_MOVIE) {
+            JzvdStd view;
+            if (mVideoCache.size() == 0) {
+                view = new JzvdStd(mContext);
+            } else {
+                view = mVideoCache.removeFirst();
+            }
+            view.setUp(item.url, item.name, Jzvd.SCREEN_WINDOW_NORMAL);
+            view.startVideo();
+            pageView = view;
         } else {
-            view = mViewCache.removeFirst();
-        }
+            SimpleDraweeView view;
+            if (mViewCache.size() == 0) {
+                view = new SimpleDraweeView(mContext);
+                view.setBackgroundColor(0xff000000);
+                ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(width, height);
+                view.setLayoutParams(layoutParams);
 
-        ImageRequest request =ImageRequestBuilder
-                .newBuilderWithSource(Uri.parse(item.url))
-                .setResizeOptions(new ResizeOptions(width, height))
-                .build();
-        DraweeController controller = Fresco.newDraweeControllerBuilder()
-                .setImageRequest(request)
-                .setOldController(view.getController())
-                .build();
-        view.setController(controller);
+                view.setOnLongClickListener(new View.OnLongClickListener() {
+                    @Override
+                    public boolean onLongClick(View v) {
+                        ((PicPageActivity)mContext).getHandler().sendEmptyMessage(PicPageActivity.AutoHandler.MSG_AUTO_PLAY);
+                        return false;
+                    }
+                });
+
+                GenericDraweeHierarchy hierarchy = view.getHierarchy();
+                hierarchy.setActualImageScaleType(ScalingUtils.ScaleType.FIT_CENTER);
+                hierarchy.setPlaceholderImage(R.drawable.icon_pic, ScalingUtils.ScaleType.CENTER_INSIDE);
+                hierarchy.setFailureImage(R.drawable.icon_err, ScalingUtils.ScaleType.CENTER_INSIDE);
+                hierarchy.setProgressBarImage(new AutoRotateDrawable(mContext.getResources().getDrawable(R.drawable.icon_progress_bar, null), 2000), ScalingUtils.ScaleType.CENTER_INSIDE);
+            } else {
+                view = mViewCache.removeFirst();
+            }
+
+            ImageRequest request = ImageRequestBuilder
+                    .newBuilderWithSource(Uri.parse(item.url))
+                    .setResizeOptions(new ResizeOptions(width, height))
+                    .build();
+            DraweeController controller = Fresco.newDraweeControllerBuilder()
+                    .setImageRequest(request)
+                    .setOldController(view.getController())
+                    .build();
+            view.setController(controller);
+            pageView = view;
+        }
 
         //这里我是用Facebook的Fresco加载的图片，你可以在这里换成你使用的图片加载方式
 //        final SimpleDraweeView view = view;
@@ -117,14 +137,21 @@ public class PicPageAdapter extends PagerAdapter {
 //        });
 //        view.setController(controller.build());
 //        view.setImageURI(mDatas.get(position).url);
-        container.addView(view, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
-        return view;
+        container.addView(pageView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
+        return pageView;
     }
 
     @Override
     public void destroyItem(ViewGroup container, int position, Object object) {
-        SimpleDraweeView contentView = (SimpleDraweeView) object;
-        container.removeView(contentView);
-        this.mViewCache.add(contentView);
+        if (object instanceof JzvdStd) {
+            JzvdStd contentView = (JzvdStd) object;
+            contentView.release();
+            container.removeView(contentView);
+            this.mVideoCache.add(contentView);
+        } else {
+            SimpleDraweeView contentView = (SimpleDraweeView) object;
+            container.removeView(contentView);
+            this.mViewCache.add(contentView);
+        }
     }
 }

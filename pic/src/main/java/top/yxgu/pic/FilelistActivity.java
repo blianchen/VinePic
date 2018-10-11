@@ -241,7 +241,7 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
             Intent intent = new Intent("top.yxgu.pic.FilelistActivity");
             intent.putExtra("top.yxgu.pic.root", itemInfo.url);
             startActivity(intent);
-        } else if (itemInfo.type == ItemInfo.TYPE_IMAGE) {
+        } else if (itemInfo.type == ItemInfo.TYPE_IMAGE || itemInfo.type == ItemInfo.TYPE_MOVIE) {
 //            Intent intent = new Intent("top.yxgu.pic.PicActivity");
 //            intent.putExtra("top.yxgu.pic.root", rootPath);
 //            intent.putExtra("top.yxgu.pic.url", itemInfo.url);
@@ -252,7 +252,7 @@ public class FilelistActivity extends AppCompatActivity implements AdapterView.O
             bundle.putInt("pos", position);
             intent.putExtras(bundle);
             startActivity(intent);
-        } else if (itemInfo.type == ItemInfo.TYPE_MOVIE) {
+//        } else if (itemInfo.type == ItemInfo.TYPE_MOVIE) {
 //            Intent intent = new Intent(Intent.ACTION_VIEW);
 //            String path = Environment.getExternalStorageDirectory().getPath()+ "/1.mp4";//该路径可以自定义
 //            File file = new File(path);

@@ -8,14 +8,13 @@ import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.ContextMenu;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 
 import java.util.List;
+
+import cn.jzvd.JzvdStd;
 
 public class PicPageActivity extends Activity {
 
@@ -90,16 +89,29 @@ public class PicPageActivity extends Activity {
         }
     }
 
+    public Handler getHandler() {
+        return handler;
+    }
 
-//    @Override
-//    public void onCreateContextMenu(ContextMenu menu, View v, ContextMenu.ContextMenuInfo menuInfo) {
-//        menu.add(0, 1, Menu.NONE, " 自动播放 ");
-//    }
-//
-//    @Override
-//    public boolean onContextItemSelected(MenuItem item) {
-//        handler.sendEmptyMessage(AutoHandler.MSG_AUTO_PLAY);
-//        super.onContextItemSelected(item);
-//        return true;
-//    }
+    @Override
+    public void onBackPressed() {
+        if (JzvdStd.backPress()) {
+            return;
+        }
+        super.onBackPressed();
+        handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+//        JzvdStd.releaseAllVideos();
+        handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+    }
 }

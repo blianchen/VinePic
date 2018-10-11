@@ -1,8 +1,10 @@
 package top.yxgu.pic;
 
 import android.content.Context;
+import android.graphics.drawable.Animatable;
 import android.net.Uri;
 import android.support.annotation.LayoutRes;
+import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,10 +12,12 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
+import com.facebook.drawee.controller.BaseControllerListener;
 import com.facebook.drawee.generic.GenericDraweeHierarchy;
 import com.facebook.drawee.interfaces.DraweeController;
 import com.facebook.drawee.view.SimpleDraweeView;
 import com.facebook.imagepipeline.common.ResizeOptions;
+import com.facebook.imagepipeline.image.ImageInfo;
 import com.facebook.imagepipeline.request.ImageRequest;
 import com.facebook.imagepipeline.request.ImageRequestBuilder;
 
@@ -23,11 +27,13 @@ public class PicListAdapter extends BaseAdapter {
     private final LayoutInflater mInflater;
     private List<ItemInfo> mData;
     private int mResource;
+    private Context mContext;
 
     public PicListAdapter(Context context, List<ItemInfo> data,
                            @LayoutRes int resource) {
         mData = data;
         mResource = resource;
+        mContext = context;
         mInflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -79,8 +85,24 @@ public class PicListAdapter extends BaseAdapter {
                     .build();
             v.setController(controller);
         } else if (item.type == ItemInfo.TYPE_MOVIE) {
-//            hierarchy.setPlaceholderImage(R.drawable.icon_movie);
-            v.setImageResource(R.drawable.icon_movie);
+            hierarchy.setPlaceholderImage(R.drawable.icon_movie);
+            hierarchy.setOverlayImage(this.mContext.getResources().getDrawable(R.drawable.icon_movie, null));
+//            v.setImageResource(R.drawable.icon_movie);
+            int width = 256, height = 256;
+            ImageRequest request =ImageRequestBuilder
+                    .newBuilderWithSource(Uri.parse(item.url))
+                    .setResizeOptions(new ResizeOptions(width, height))
+                    .build();
+            DraweeController controller = Fresco.newDraweeControllerBuilder()
+                    .setImageRequest(request)
+//                    .setControllerListener(new BaseControllerListener<ImageInfo>(){
+//                        @Override
+//                        public void onFinalImageSet(String id, @Nullable ImageInfo imageInfo, @Nullable Animatable animatable) {
+//                        }
+//                    })
+                    .setOldController(v.getController())
+                    .build();
+            v.setController(controller);
         } else {
             v.setImageResource(R.drawable.icon_unknown);
         }

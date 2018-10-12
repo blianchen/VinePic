@@ -1,11 +1,14 @@
 package top.yxgu.pic;
 
+import android.app.UiModeManager;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.VideoView;
 
 import com.facebook.drawee.backends.pipeline.Fresco;
 import com.facebook.drawee.drawable.AutoRotateDrawable;
@@ -31,6 +34,8 @@ public class PicPageAdapter extends PagerAdapter {
     private Context mContext;
     private int mChildCount;
 
+//    private boolean isTv = false;
+
     private int width;
     private int height;
 
@@ -41,6 +46,11 @@ public class PicPageAdapter extends PagerAdapter {
         mVideoCache = new LinkedList<>();
         this.width = width;
         this.height = height;
+
+//        UiModeManager uiModeManager = (UiModeManager)mContext.getSystemService(Context.UI_MODE_SERVICE);
+//        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+//            isTv = true;
+//        }
     }
 
     @Override
@@ -80,6 +90,9 @@ public class PicPageAdapter extends PagerAdapter {
 
         View pageView;
         if (item.type == ItemInfo.TYPE_MOVIE) {
+//            VideoView view = new VideoView(mContext);
+//            view.setVideoPath(item.url);
+
             JzvdStd view;
             if (mVideoCache.size() == 0) {
                 view = new JzvdStd(mContext);
@@ -87,7 +100,6 @@ public class PicPageAdapter extends PagerAdapter {
                 view = mVideoCache.removeFirst();
             }
             view.setUp(item.url, item.name, Jzvd.SCREEN_WINDOW_NORMAL);
-//            view.startVideo();
             pageView = view;
         } else {
             SimpleDraweeView view;

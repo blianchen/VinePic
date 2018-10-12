@@ -56,6 +56,9 @@ public class Tools {
 //        cfg.put("jcifs.smb.client.forceUnicode", "false");
 //        cfg.put("jcifs.smb.client.useNtStatus", "false");
 //        cfg.put("jcifs.smb.client.useNTSmbs", "false");
+        cfg.put("jcifs.smb.client.dfs.disabled", "true");
+        cfg.put("jcifs.smb.client.soTimeout", "100000");
+        cfg.put("jcifs.smb.client.responseTimeout", "30000");
         BaseContext baseContext = new BaseContext(new PropertyConfiguration(cfg));
         return baseContext.withAnonymousCredentials();
     }

@@ -2,17 +2,23 @@ package top.yxgu.pic;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.UiModeManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
+import android.widget.VideoView;
 
 import java.util.List;
 
@@ -36,6 +42,11 @@ public class PicPageActivity extends Activity {
 
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
+        boolean isTv = false;
+        UiModeManager uiModeManager = (UiModeManager)getSystemService(Context.UI_MODE_SERVICE);
+        if (uiModeManager.getCurrentModeType() == Configuration.UI_MODE_TYPE_TELEVISION) {
+            isTv = true;
+        }
         Intent intent = getIntent();
         Bundle bundle = intent.getExtras();
         dataList = (List<ItemInfo>)bundle.getSerializable("list");
@@ -52,15 +63,39 @@ public class PicPageActivity extends Activity {
         viewPager.setAdapter(adapter);
 
 //        viewPager.setPageTransformer(true, new DepthPageTransformer());
-        viewPager.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
-                isAutoPlay = false;
-                handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
-                return false;
-            }
-        });
+        if (isTv) {
+            viewPager.setOnKeyListener(new View.OnKeyListener() {
+                @Override
+                public boolean onKey(View v, int keyCode, KeyEvent event) {
+                    handler.removeMessages(AutoHandler.MSG_START_AUTO_PLAY);
+                    switch (keyCode) {
+                        case KeyEvent.KEYCODE_DPAD_CENTER:
+                            if ((event.getFlags() & KeyEvent.FLAG_LONG_PRESS) != 0) {
+                                Log.i("OnKeyListener", "long press: ");
+                                handler.sendEmptyMessage(AutoHandler.MSG_AUTO_PLAY);
+                            }
+                            break;
+                        default:
+                            handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+                            isAutoPlay = false;
+                            handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
+                            break;
+                    }
+                    return false;
+                }
+            });
+        } else {
+            viewPager.setOnTouchListener(new View.OnTouchListener() {
+                @Override
+                public boolean onTouch(View v, MotionEvent event) {
+                    handler.removeMessages(AutoHandler.MSG_AUTO_PLAY);
+                    handler.removeMessages(AutoHandler.MSG_START_AUTO_PLAY);
+                    isAutoPlay = false;
+                    handler.sendEmptyMessage(AutoHandler.MSG_START_AUTO_PLAY);
+                    return false;
+                }
+            });
+        }
 
         viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             @Override
@@ -75,8 +110,12 @@ public class PicPageActivity extends Activity {
                 JzvdStd.releaseAllVideos();
                 View view = viewPager.findViewWithTag(position);
                 Log.i("OnPageChangeListener", "onPageSelected: "+ position + ", view:"+view);
-                if (view!=null && view instanceof JzvdStd) {
-                    ((JzvdStd)view).startVideo();
+                if (view!=null) {
+                    if (view instanceof JzvdStd) {
+                        ((JzvdStd) view).startVideo();
+                    } else if (view instanceof VideoView) {
+                        ((VideoView)view).start();
+                    }
                 }
             }
 
